@@ -1,0 +1,12 @@
+{
+  "environment": "development",
+  "database": {
+    "uri": "mongodb://localhost:27017",
+    "name": "test"
+  },
+  "logger": {
+    "level": "debug",
+    "log_path": "./logs",
+    "log_file_prefix": "./pws-collector"
+  }
+}

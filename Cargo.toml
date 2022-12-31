@@ -1,0 +1,21 @@
+[package]
+name = "pws-collector"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+mongodb = "2"
+lazy_static = "1.4"
+config = "0.13"
+tokio = "1"
+tracing = {git = "https://github.com/tokio-rs/tracing", version = "0.2"}
+tracing-subscriber = {git = "https://github.com/tokio-rs/tracing", version = "0.3", features = ["env-filter"] }
+tracing-appender = {git = "https://github.com/tokio-rs/tracing"}
+chrono = "0.4"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+futures = "0.3"
+anyhow = "1.0"
+nanoid = "0.4"
+dotenv = "0.15"
+reqwest = { version = "0.11", features = ["json"] }
