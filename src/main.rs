@@ -1,14 +1,14 @@
-use tokio::{self, time};
-use tracing::{info, debug, error};
 use dotenv::dotenv;
 use reqwest::Client;
+use tokio::{self, time};
+use tracing::{debug, error, info};
 
-use crate::{settings::get_settings, models::PwsdataResponse};
+use crate::{models::PwsdataResponse, settings::get_settings};
 mod database;
 mod logger;
 mod models;
-mod settings;
 mod services;
+mod settings;
 
 #[cfg(test)]
 mod test;
@@ -18,7 +18,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv().ok();
 
     logger::setup();
-    database::setup().await.expect("Failed to setup database connection");
+    database::setup()
+        .await
+        .expect("Failed to setup database connection");
     services::setup().await.expect("Failed to setup services");
     let settings = get_settings();
     info!("Running in {} mode", &settings.environment);
@@ -64,7 +66,18 @@ async fn fetch(client: &Client, url: &str) -> Result<(), Box<dyn std::error::Err
                     }
                 }
             }
-            status => error!("status: {}, path: {}", status, res.url().path()),
+            status => {
+                // parse station from url
+                let station = url.split("stationId=").collect::<Vec<&str>>()[1]
+                    .split("&")
+                    .collect::<Vec<&str>>()[0];
+                error!(
+                    "status: {}, path: {}, station: {}",
+                    status,
+                    res.url().path(),
+                    station
+                )
+            }
         }
     }
 }
