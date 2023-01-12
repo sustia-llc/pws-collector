@@ -3,7 +3,8 @@ use reqwest::Client;
 use tokio::{self, time};
 use tracing::{debug, error, info};
 
-use crate::{models::PwsdataResponse, settings::get_settings};
+use crate::models::PwsdataResponse;
+use settings::SETTINGS;
 mod database;
 mod logger;
 mod models;
@@ -22,8 +23,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .await
         .expect("Failed to setup database connection");
     services::setup().await.expect("Failed to setup services");
-    let settings = get_settings();
-    info!("Running in {} mode", &settings.environment);
+    info!("Running in {} mode",SETTINGS.environment);
     let connection = database::get_connection();
     debug!("Database connected: {}", &connection.name());
 

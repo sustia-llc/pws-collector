@@ -13,7 +13,7 @@ use mongodb::{
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use crate::models::Pwsdata;
-use crate::settings::get_settings;
+use crate::settings::SETTINGS;
 
 static mut CONNECTION: Option<MongoDatabase> = None;
 static IS_INITIALIZED: AtomicBool = AtomicBool::new(false);
@@ -28,9 +28,8 @@ pub async fn setup() -> Result<(), MongoError> {
         panic!("Database already initialized");
     }
 
-    let settings = get_settings();
-    let db_uri = settings.database.uri.as_str();
-    let db_name = settings.database.name.as_str();
+    let db_uri = SETTINGS.database.uri.as_str();
+    let db_name = SETTINGS.database.name.as_str();
     let connection = Client::with_uri_str(db_uri)
         .await
         .expect("failed to connect")
