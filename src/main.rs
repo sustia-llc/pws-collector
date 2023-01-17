@@ -1,10 +1,9 @@
+use crate::models::PwsdataResponse;
 use dotenv::dotenv;
 use reqwest::Client;
+use settings::SETTINGS;
 use tokio::{self, time};
 use tracing::{debug, error, info};
-
-use crate::models::PwsdataResponse;
-use settings::SETTINGS;
 mod database;
 mod logger;
 mod models;
@@ -19,13 +18,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv().ok();
 
     logger::setup();
-    database::setup()
-        .await
-        .expect("Failed to setup database connection");
-    services::setup().await.expect("Failed to setup services");
-    info!("Running in {} mode",SETTINGS.environment);
-    let connection = database::get_connection();
-    debug!("Database connected: {}", &connection.name());
+    info!("Running in {} mode", SETTINGS.environment);
 
     let api_key = format!("{}", std::env::var("API_KEY")?);
     let stations = format!("{}", std::env::var("STATIONS")?);
@@ -59,7 +52,16 @@ async fn fetch(client: &Client, url: &str) -> Result<(), Box<dyn std::error::Err
                 let json = &res.json::<PwsdataResponse>().await;
                 match json {
                     Ok(json) => {
-                        services::insert_pwsdata(json.to_owned()).await.unwrap();
+                        let result = services::insert_pwsdata(json.to_owned()).await;
+
+                        match result {
+                            Ok(result) => {
+                                debug!("Inserted: {:?}", result);
+                            }
+                            Err(e) => {
+                                error!("Error inserting pwsdata: {:?}", e);
+                            }
+                        }
                     }
                     Err(e) => {
                         error!("Error parsing res.json: {}", e);

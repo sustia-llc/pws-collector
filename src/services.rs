@@ -1,45 +1,31 @@
+use async_once::AsyncOnce;
+use lazy_static::lazy_static;
 use mongodb::error::Error as MongoError;
 use mongodb::Collection;
+use mongodb::results::InsertOneResult;
 use tracing::{error, debug};
-use std::sync::atomic::{AtomicBool, Ordering};
-
-use crate::database;
+use crate::database::{PWSDATA_COLLECTION_STR, CONNECTION};
 use crate::models::{Pwsdata, PwsdataResponse};
 
-static mut PWSDATA_COLLECTION: Option<Collection<Pwsdata>> = None;
-static IS_INITIALIZED: AtomicBool = AtomicBool::new(false);
-
-pub async fn setup() -> Result<(), MongoError> {
-    let exchange =
-        IS_INITIALIZED.compare_exchange(false, true, Ordering::Acquire, Ordering::Relaxed);
-    let can_setup = exchange == Ok(false);
-
-    if !can_setup {
-        panic!("Services already initialized");
-    }
-    let connection = database::get_connection();
-    let collection = connection.collection::<Pwsdata>(database::PWSDATA_COLLECTION_STR);
-    unsafe {
-        PWSDATA_COLLECTION = Some(collection);
-    };
-
-    Ok(())
+lazy_static! {
+    static ref PWSDATA_COLLECTION : AsyncOnce<Collection<Pwsdata>> = AsyncOnce::new(async {
+        let connection = CONNECTION.get().await;
+        let collection = connection.collection::<Pwsdata>(PWSDATA_COLLECTION_STR);
+        collection
+    });
 }
 
-pub async fn insert_pwsdata(pws_response: PwsdataResponse) -> Result<(), MongoError> {
+pub async fn insert_pwsdata(pws_response: PwsdataResponse) -> Result<InsertOneResult, MongoError> {
     let pws_data = Pwsdata::from(pws_response);
-    let result = get_collection().insert_one(pws_data, None).await;
+    let result = PWSDATA_COLLECTION.get().await.insert_one(pws_data, None).await;
     match result {
-        Ok(_) => debug!("Inserted pwsdata"),
-        Err(err) => error!("Error inserting pwsdata: {}", err),
-    }
-    Ok(())
-}
-
-fn get_collection() -> &'static Collection<Pwsdata> {
-    unsafe {
-        PWSDATA_COLLECTION
-            .as_ref()
-            .expect("Collection not initialized")
+        Ok(result) => {
+            debug!("Inserted pwsdata: {:?}", result);
+            Ok(result)
+        }
+        Err(err) => {
+            error!("Error inserting pwsdata: {:?}", err);
+            Err(err)
+        }
     }
 }
