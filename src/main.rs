@@ -20,11 +20,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     logger::setup();
     info!("Running in {} mode", SETTINGS.environment);
 
-    let api_key = format!("{}", std::env::var("API_KEY")?);
-    let stations = format!("{}", std::env::var("STATIONS")?);
-    let stations: Vec<String> = stations.split(",").map(|s| s.to_string()).collect();
-    let urls: Vec<String> = stations.iter().map(|station| format!("https://api.weather.com/v2/pws/observations/current?stationId={}&format=json&units=m&apiKey={}", station, api_key)).collect();
-
+    let api_key = (std::env::var("API_KEY")?).to_string();
+    let stations = (std::env::var("STATIONS")?).to_string();
+    let stations: Vec<String> = stations.split(',').map(|s| s.to_string()).collect();
+    let urls: Vec<String> = stations.iter().map(|station| format!("https://api.weather.com/v2/pws/observations/current?stationId={station}&format=json&units=m&apiKey={api_key}")).collect();
     let user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36";
 
     let client = reqwest::Client::builder()
@@ -71,7 +70,7 @@ async fn fetch(client: &Client, url: &str) -> Result<(), Box<dyn std::error::Err
             status => {
                 // parse station from url
                 let station = url.split("stationId=").collect::<Vec<&str>>()[1]
-                    .split("&")
+                    .split('&')
                     .collect::<Vec<&str>>()[0];
                 error!(
                     "status: {}, path: {}, station: {}",

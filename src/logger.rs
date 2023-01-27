@@ -10,7 +10,7 @@ use tracing_subscriber::{
 pub fn setup() {
     if env::var_os("RUST_LOG").is_none() {
         let level = SETTINGS.logger.level.as_str();
-        let env = format!("pws_collector={},mongodb={}", level, level);
+        let env = format!("pws_collector={level},mongodb={level}");
         env::set_var("RUST_LOG", env);
     }
     // Log warnings and errors to a file.

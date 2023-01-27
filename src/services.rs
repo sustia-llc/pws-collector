@@ -9,8 +9,7 @@ use crate::models::{Pwsdata, PwsdataResponse};
 lazy_static! {
     static ref PWSDATA_COLLECTION : AsyncOnce<Collection<Pwsdata>> = AsyncOnce::new(async {
         let connection = CONNECTION.get().await;
-        let collection = connection.collection::<Pwsdata>(PWSDATA_COLLECTION_STR);
-        collection
+        connection.collection::<Pwsdata>(PWSDATA_COLLECTION_STR)
     });
 }
 
